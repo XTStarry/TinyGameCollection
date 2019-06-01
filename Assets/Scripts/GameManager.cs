@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     private Tile[] allTiles;
@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
 
     public List<Tile[]> rowTiles;
     public List<Tile[]> columnTiles;
+    public GameObject GameOverPanel;
     // Start is called before the first frame update
     void Start()
     {
@@ -58,6 +59,8 @@ public class GameManager : MonoBehaviour
             {
                 lineOfTiles[i].Number *= 2;
                 lineOfTiles[i + 1].Number = 0;
+                // 得分
+                ScoreTracker.Instance.Score += lineOfTiles[i].Number;
                 lineOfTiles[i].isMerged = true;
                 return true;
             }
@@ -85,6 +88,8 @@ public class GameManager : MonoBehaviour
             {
                 lineOfTiles[i].Number *= 2;
                 lineOfTiles[i - 1].Number = 0;
+                // 得分
+                ScoreTracker.Instance.Score += lineOfTiles[i].Number;
                 lineOfTiles[i].isMerged = true;
                 return true;
             }
@@ -154,6 +159,10 @@ public class GameManager : MonoBehaviour
         {
             UpdateEmptyTiles();
             Generate();
+            if (CanMove()==false)
+            {
+                GameOver();
+            }
         }
     }
 
@@ -179,5 +188,47 @@ public class GameManager : MonoBehaviour
             if (item.Number == 0)
                 emptyTiles.Add(item);
         }
+    }
+
+    /// <summary>
+    /// 开始新游戏
+    /// </summary>
+    public void NewGame() => SceneManager.LoadScene(0);
+
+    /// <summary>
+    /// 游戏结束
+    /// </summary>
+    public void GameOver()
+    {
+        GameOverPanel.SetActive(true);
+    }
+
+    bool CanMove()
+    {
+        if (emptyTiles.Count>0)
+        {
+            return true;
+        }
+        foreach (var item in rowTiles)
+        {
+            for (int i = 0; i < item.Length-1; i++)
+            {
+                if (item[i].Number==item[i+1].Number)
+                {
+                    return true;
+                }
+            }
+        }
+        foreach (var item in columnTiles)
+        {
+            for (int i = 0; i < item.Length - 1; i++)
+            {
+                if (item[i].Number == item[i + 1].Number)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
