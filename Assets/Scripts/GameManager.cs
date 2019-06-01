@@ -11,9 +11,13 @@ public class GameManager : MonoBehaviour
     public List<Tile[]> rowTiles;
     public List<Tile[]> columnTiles;
     public GameObject GameOverPanel;
+    public GameObject WinPanel;
+
+    public bool IsWin;
     // Start is called before the first frame update
     void Start()
     {
+        IsWin = false;
         xyTiles = new Tile[4, 4];
         allTiles = GameObject.FindObjectsOfType<Tile>();
         emptyTiles = new List<Tile>();
@@ -91,6 +95,10 @@ public class GameManager : MonoBehaviour
                 // 得分
                 ScoreTracker.Instance.Score += lineOfTiles[i].Number;
                 lineOfTiles[i].isMerged = true;
+                if (lineOfTiles[i].Number==2048&&IsWin==false)
+                {
+                    GameWin();
+                }
                 return true;
             }
         }
@@ -203,6 +211,26 @@ public class GameManager : MonoBehaviour
         GameOverPanel.SetActive(true);
     }
 
+    /// <summary>
+    /// 胜利
+    /// </summary>
+    void GameWin()
+    {
+        WinPanel.SetActive(true);
+        IsWin = true;
+    }
+    /// <summary>
+    /// 继续游戏
+    /// </summary>
+    public void KeepGoing()
+    {
+        WinPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// 是否可以移动
+    /// </summary>
+    /// <returns></returns>
     bool CanMove()
     {
         if (emptyTiles.Count>0)
