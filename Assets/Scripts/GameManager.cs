@@ -2,18 +2,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
+/// <summary>
+/// 游戏状态
+/// </summary>
+public enum GameState
+{
+    Playing,
+    GameOver,
+    WaitForMoveEnd
+}
 public class GameManager : MonoBehaviour
 {
+
     private Tile[] allTiles;
     private List<Tile> emptyTiles;
     private Tile[,] xyTiles;
+    private bool makeMove;
+    private bool[] moveComplete = new bool[] { true, true, true, true };
 
     public List<Tile[]> rowTiles;
     public List<Tile[]> columnTiles;
     public GameObject GameOverPanel;
     public GameObject WinPanel;
-
+    public GameState state = GameState.Playing;
     public bool IsWin;
+
+    public float delay;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -123,59 +139,106 @@ public class GameManager : MonoBehaviour
             emptyTiles.RemoveAt(randomIndex);
         }
     }
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
+    /// <summary>
+    /// 移动
+    /// </summary>
+    /// <param name="md">移动方向</param>
     public void Move(MoveDirection md)
     {
         ResetAllMergeFlags();
-        bool makeMove = false;
+        if (state!=GameState.Playing)
+        {
+            return;
+        }
+
+        if (delay > 0)
+        {
+            StartCoroutine(MoveCoroutine(md));
+        }
+        else
+        {
+            
+
+        }
+        ResetAllMergeFlags();
+        
+    }
+
+    IEnumerator MoveCoroutine(MoveDirection md)
+    {
+        yield return null;
+        state = GameState.WaitForMoveEnd;
         switch (md)
         {
             case MoveDirection.left:
-                foreach (var item in rowTiles)
+                for (int i = 0; i < rowTiles.Count; i++)
                 {
-                    while (MakeOneMoveDownIndex(item)) { makeMove = true; }
+                    StartCoroutine(MakeOneMoveDownIndexCort(rowTiles[i],i));
                 }
                 break;
             case MoveDirection.right:
-                foreach (var item in rowTiles)
+                for (int i = 0; i < rowTiles.Count; i++)
                 {
-                    while (MakeOneMoveUpIndex(item)) { makeMove = true; }
+                    StartCoroutine(MakeOneMoveUpIndexCort(rowTiles[i], i));
                 }
                 break;
             case MoveDirection.up:
-                foreach (var item in columnTiles)
+                for (int i = 0; i < columnTiles.Count; i++)
                 {
-                    while (MakeOneMoveDownIndex(item)) { makeMove = true; }
+                    StartCoroutine(MakeOneMoveDownIndexCort(columnTiles[i], i));
                 }
                 break;
             case MoveDirection.down:
-                foreach (var item in columnTiles)
-                { 
-                    while (MakeOneMoveUpIndex(item)) { makeMove = true; }
+                for (int i = 0; i < columnTiles.Count; i++)
+                {
+                    StartCoroutine(MakeOneMoveUpIndexCort(columnTiles[i], i));
                 }
                 break;
             default:
                 break;
         }
+        while (moveComplete[0]==false|| moveComplete[1] == false || moveComplete[2] == false || moveComplete[3] == false)
+        {
+            yield return null;
+        }
         // 如果发生移动，更新空格子,生成一个数字格子
-        if(makeMove)
+        if (makeMove)
         {
             UpdateEmptyTiles();
             Generate();
-            if (CanMove()==false)
+            if (CanMove() == false)
             {
                 GameOver();
             }
         }
+        state = GameState.Playing;
+
+
     }
 
+    IEnumerator MakeOneMoveDownIndexCort(Tile[] lineOfTiles, int index)
+    {
+        moveComplete[index] = false;
+        while (MakeOneMoveDownIndex(lineOfTiles))
+        {
+            makeMove = true;
+            yield return new WaitForSeconds(delay);
+        }
+        moveComplete[index] = true;
+    }
+    IEnumerator MakeOneMoveUpIndexCort(Tile[] lineOfTiles, int index)
+    {
+        moveComplete[index] = false;
+        while (MakeOneMoveUpIndex(lineOfTiles))
+        {
+            makeMove = true;
+            yield return new WaitForSeconds(delay);
+        }
+        moveComplete[index] = true;
+    }
     /// <summary>
-    /// 充值所有合并标记
+    /// 重置所有合并标记
     /// </summary>
     private void ResetAllMergeFlags()
     {
@@ -208,6 +271,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void GameOver()
     {
+        state = GameState.GameOver;
         GameOverPanel.SetActive(true);
     }
 
@@ -225,6 +289,7 @@ public class GameManager : MonoBehaviour
     public void KeepGoing()
     {
         WinPanel.SetActive(false);
+        state = GameState.Playing;
     }
 
     /// <summary>

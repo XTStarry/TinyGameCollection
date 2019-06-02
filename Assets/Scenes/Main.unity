@@ -6811,7 +6811,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GameOverPanel: {fileID: 1047114181}
   WinPanel: {fileID: 858229724}
+  state: 0
   IsWin: 0
+  delay: 0.1
 --- !u!4 &2011947939
 Transform:
   m_ObjectHideFlags: 0
